@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.attribute.FileAttributeView;
-import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
@@ -29,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Attribute provider that provides the "unix" attribute view.
@@ -94,6 +94,7 @@ final class UnixAttributeProvider extends AttributeProvider {
     return id;
   }
 
+  @NullableDecl
   @SuppressWarnings("unchecked")
   @Override
   public Object get(File file, String attribute) {
@@ -109,7 +110,7 @@ final class UnixAttributeProvider extends AttributeProvider {
             (Set<PosixFilePermission>) file.getAttribute("posix", "permissions");
         return toMode(permissions);
       case "ctime":
-        return FileTime.fromMillis(file.getCreationTime());
+        return file.getCreationTime();
       case "rdev":
         return 0L;
       case "dev":

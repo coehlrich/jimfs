@@ -69,7 +69,8 @@ final class HeapDisk {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
     checkArgument(maxBlockCount > 0, "maxBlockCount (%s) must be positive", maxBlockCount);
     checkArgument(
-        maxCachedBlockCount >= 0, "maxCachedBlockCount must be non-negative", maxCachedBlockCount);
+        maxCachedBlockCount >= 0, "maxCachedBlockCount (%s) must be non-negative",
+        maxCachedBlockCount);
     this.blockSize = blockSize;
     this.maxBlockCount = maxBlockCount;
     this.maxCachedBlockCount = maxCachedBlockCount;
@@ -82,7 +83,14 @@ final class HeapDisk {
   }
 
   private RegularFile createBlockCache(int maxCachedBlockCount) {
-    return new RegularFile(-1, this, new byte[Math.min(maxCachedBlockCount, 8192)][], 0, 0);
+    // This file is just for holding blocks so things like the creation time don't matter
+    return new RegularFile(
+        -1,
+        SystemFileTimeSource.INSTANCE.now(),
+        this,
+        new byte[Math.min(maxCachedBlockCount, 8192)][],
+        0,
+        0);
   }
 
   /** Returns the size of blocks created by this disk. */

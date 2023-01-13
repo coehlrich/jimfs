@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -101,11 +102,14 @@ public class FileTreeTest {
             @Override
             public ParseResult parseUriPath(String uriPath) {
               checkArgument(
-                  uriPath.matches("^/[/$!].*"), "uriPath (%s) must start with // or /$ or /!");
+                  uriPath.matches("^/[/$!].*"), "uriPath (%s) must start with // or /$ or /!",
+                  uriPath);
               return parsePath(uriPath.substring(1)); // skip leading /
             }
           },
           false);
+
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
 
   private FileTree fileTree;
   private File workingDirectory;
@@ -113,10 +117,10 @@ public class FileTreeTest {
 
   @Before
   public void setUp() {
-    Directory root = Directory.createRoot(0, Name.simple("/"));
+    Directory root = Directory.createRoot(0, fileTimeSource.now(), Name.simple("/"));
     files.put("/", root);
 
-    Directory otherRoot = Directory.createRoot(2, Name.simple("$"));
+    Directory otherRoot = Directory.createRoot(2, fileTimeSource.now(), Name.simple("$"));
     files.put("$", otherRoot);
 
     Map<Name, Directory> roots = new HashMap<>();
@@ -437,14 +441,16 @@ public class FileTreeTest {
     }
   }
 
+  @CanIgnoreReturnValue
   private File createDirectory(String parent, String name) {
     Directory dir = (Directory) files.get(parent);
-    Directory newFile = Directory.create(new Random().nextInt());
+    Directory newFile = Directory.create(new Random().nextInt(), fileTimeSource.now());
     dir.link(Name.simple(name), newFile);
     files.put(name, newFile);
     return newFile;
   }
 
+  @CanIgnoreReturnValue
   private File createFile(String parent, String name) {
     Directory dir = (Directory) files.get(parent);
     File newFile = regularFile(0);
@@ -453,9 +459,12 @@ public class FileTreeTest {
     return newFile;
   }
 
+  @CanIgnoreReturnValue
   private File createSymbolicLink(String parent, String name, String target) {
     Directory dir = (Directory) files.get(parent);
-    File newFile = SymbolicLink.create(new Random().nextInt(), pathService.parsePath(target));
+    File newFile =
+        SymbolicLink.create(
+            new Random().nextInt(), fileTimeSource.now(), pathService.parsePath(target));
     dir.link(Name.simple(name), newFile);
     files.put(name, newFile);
     return newFile;

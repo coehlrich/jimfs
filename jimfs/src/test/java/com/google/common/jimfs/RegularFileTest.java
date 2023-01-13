@@ -121,6 +121,8 @@ public class RegularFileTest {
     private final int cacheSize;
     private final ReuseStrategy reuseStrategy;
 
+    private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
     private HeapDisk disk;
 
     public TestConfiguration(int blockSize, int cacheSize, ReuseStrategy reuseStrategy) {
@@ -142,7 +144,7 @@ public class RegularFileTest {
       if (reuseStrategy == ReuseStrategy.NEW_DISK) {
         disk = createDisk();
       }
-      return RegularFile.create(0, disk);
+      return RegularFile.create(0, fileTimeSource.now(), disk);
     }
 
     public void tearDown(RegularFile file) {
@@ -172,6 +174,7 @@ public class RegularFileTest {
   public static class RegularFileTestRunner extends TestCase {
 
     private final TestConfiguration configuration;
+    private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
 
     protected RegularFile file;
 
@@ -394,7 +397,7 @@ public class RegularFileTest {
     }
 
     public void testEmpty_copy() throws IOException {
-      RegularFile copy = file.copyWithoutContent(1);
+      RegularFile copy = file.copyWithoutContent(1, fileTimeSource.now());
       assertContentEquals("", copy);
     }
 
@@ -573,7 +576,7 @@ public class RegularFileTest {
     public void testNonEmpty_read_fromPastEnd_singleBuffer() throws IOException {
       fillContent("123");
       ByteBuffer buffer = ByteBuffer.allocate(3);
-      file.read(3, buffer);
+      assertEquals(-1, file.read(3, buffer));
       assertBufferEquals("000", 3, buffer);
     }
 
@@ -817,16 +820,16 @@ public class RegularFileTest {
 
     public void testNonEmpty_copy() throws IOException {
       fillContent("123456");
-      RegularFile copy = file.copyWithoutContent(1);
+      RegularFile copy = file.copyWithoutContent(1, fileTimeSource.now());
       file.copyContentTo(copy);
       assertContentEquals("123456", copy);
     }
 
     public void testNonEmpty_copy_multipleTimes() throws IOException {
       fillContent("123456");
-      RegularFile copy = file.copyWithoutContent(1);
+      RegularFile copy = file.copyWithoutContent(1, fileTimeSource.now());
       file.copyContentTo(copy);
-      RegularFile copy2 = copy.copyWithoutContent(2);
+      RegularFile copy2 = copy.copyWithoutContent(2, fileTimeSource.now());
       copy.copyContentTo(copy2);
       assertContentEquals("123456", copy);
     }
@@ -893,7 +896,7 @@ public class RegularFileTest {
     protected static void assertContentEquals(byte[] expected, RegularFile actual) {
       assertEquals(expected.length, actual.sizeWithoutLocking());
       byte[] actualBytes = new byte[(int) actual.sizeWithoutLocking()];
-      actual.read(0, ByteBuffer.wrap(actualBytes));
+      int unused = actual.read(0, ByteBuffer.wrap(actualBytes));
       assertArrayEquals(expected, actualBytes);
     }
   }

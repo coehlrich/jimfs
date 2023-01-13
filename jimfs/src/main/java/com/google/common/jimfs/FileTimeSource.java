@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
+ * Copyright 2021 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-/**
- * Package containing the Jimfs file system API and implementation. Most users should only need to
- * use the {@link com.google.common.jimfs.Jimfs Jimfs} and {@link
- * com.google.common.jimfs.Configuration Configuration} classes.
- */
-@CheckReturnValue
-@ParametersAreNonnullByDefault
 package com.google.common.jimfs;
 
-import com.google.errorprone.annotations.CheckReturnValue;
-import javax.annotation.ParametersAreNonnullByDefault;
+import java.nio.file.attribute.FileTime;
+
+/**
+ * A source of the current time as a {@link FileTime}, to enable fake time sources for testing.
+ *
+ * @since 1.3
+ */
+public interface FileTimeSource {
+  /** Returns the current time according to this source as a {@link FileTime}. */
+  FileTime now();
+}

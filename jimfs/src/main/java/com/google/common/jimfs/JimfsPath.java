@@ -49,6 +49,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  *
  * @author Colin Decker
  */
+@SuppressWarnings("ShouldNotSubclass") // I know what I'm doing I promise
 final class JimfsPath implements Path {
 
   @NullableDecl private final Name root;
@@ -111,6 +112,7 @@ final class JimfsPath implements Path {
     return root != null;
   }
 
+  @NullableDecl
   @Override
   public JimfsPath getRoot() {
     if (root == null) {
@@ -119,11 +121,13 @@ final class JimfsPath implements Path {
     return pathService.createRoot(root);
   }
 
+  @NullableDecl
   @Override
   public JimfsPath getFileName() {
     return names.isEmpty() ? null : getName(names.size() - 1);
   }
 
+  @NullableDecl
   @Override
   public JimfsPath getParent() {
     if (names.isEmpty() || (names.size() == 1 && root == null)) {

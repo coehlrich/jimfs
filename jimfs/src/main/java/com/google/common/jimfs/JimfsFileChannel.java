@@ -22,6 +22,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -158,7 +159,7 @@ final class JimfsFileChannel extends FileChannel {
           if (read != -1) {
             position += read;
           }
-          file.updateAccessTime();
+          file.setLastAccessTime(fileSystemState.now());
           completed = true;
         } finally {
           file.readLock().unlock();
@@ -195,7 +196,7 @@ final class JimfsFileChannel extends FileChannel {
           if (read != -1) {
             position += read;
           }
-          file.updateAccessTime();
+          file.setLastAccessTime(fileSystemState.now());
           completed = true;
         } finally {
           file.readLock().unlock();
@@ -228,7 +229,7 @@ final class JimfsFileChannel extends FileChannel {
       file.readLock().lockInterruptibly();
       try {
         read = file.read(position, dst);
-        file.updateAccessTime();
+        file.setLastAccessTime(fileSystemState.now());
         completed = true;
       } finally {
         file.readLock().unlock();
@@ -263,7 +264,7 @@ final class JimfsFileChannel extends FileChannel {
           }
           written = file.write(position, src);
           position += written;
-          file.updateModifiedTime();
+          file.setLastModifiedTime(fileSystemState.now());
           completed = true;
         } finally {
           file.writeLock().unlock();
@@ -301,7 +302,7 @@ final class JimfsFileChannel extends FileChannel {
           }
           written = file.write(position, buffers);
           position += written;
-          file.updateModifiedTime();
+          file.setLastModifiedTime(fileSystemState.now());
           completed = true;
         } finally {
           file.writeLock().unlock();
@@ -339,7 +340,7 @@ final class JimfsFileChannel extends FileChannel {
             position = file.sizeWithoutLocking();
             written = file.write(position, src);
             this.position = position + written;
-            file.updateModifiedTime();
+            file.setLastModifiedTime(fileSystemState.now());
             completed = true;
           } finally {
             file.writeLock().unlock();
@@ -360,7 +361,7 @@ final class JimfsFileChannel extends FileChannel {
         file.writeLock().lockInterruptibly();
         try {
           written = file.write(position, src);
-          file.updateModifiedTime();
+          file.setLastModifiedTime(fileSystemState.now());
           completed = true;
         } finally {
           file.writeLock().unlock();
@@ -399,6 +400,7 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public FileChannel position(long newPosition) throws IOException {
     Util.checkNotNegative(newPosition, "newPosition");
     checkOpen();
@@ -448,6 +450,7 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public FileChannel truncate(long size) throws IOException {
     Util.checkNotNegative(size, "size");
     checkOpen();
@@ -465,7 +468,7 @@ final class JimfsFileChannel extends FileChannel {
           if (position > size) {
             position = size;
           }
-          file.updateModifiedTime();
+          file.setLastModifiedTime(fileSystemState.now());
           completed = true;
         } finally {
           file.writeLock().unlock();
@@ -514,7 +517,7 @@ final class JimfsFileChannel extends FileChannel {
       file.readLock().lockInterruptibly();
       try {
         transferred = file.transferTo(position, count, target);
-        file.updateAccessTime();
+        file.setLastAccessTime(fileSystemState.now());
         completed = true;
       } finally {
         file.readLock().unlock();
@@ -552,7 +555,7 @@ final class JimfsFileChannel extends FileChannel {
             position = file.sizeWithoutLocking();
             transferred = file.transferFrom(src, position, count);
             this.position = position + transferred;
-            file.updateModifiedTime();
+            file.setLastModifiedTime(fileSystemState.now());
             completed = true;
           } finally {
             file.writeLock().unlock();
@@ -573,7 +576,7 @@ final class JimfsFileChannel extends FileChannel {
         file.writeLock().lockInterruptibly();
         try {
           transferred = file.transferFrom(src, position, count);
-          file.updateModifiedTime();
+          file.setLastModifiedTime(fileSystemState.now());
           completed = true;
         } finally {
           file.writeLock().unlock();
